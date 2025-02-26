@@ -44,3 +44,30 @@ from src.recursive_engine import UnifiedRecursiveSystem
 
 # Initialize the system
 system = UnifiedRecursiveSystem(
+
+# Initialize the system
+system = UnifiedRecursiveSystem(
+    coherence_threshold=0.8,
+    stability_margin=0.95,
+    entanglement_coupling=0.75,
+    recursive_depth=4
+)
+
+# Process data with recursive self-observation
+data = your_data_here  # NumPy array
+compressed_data, metrics = system.compress_with_meta_awareness(data)
+
+# Analyze performance
+performance = system.analyze_system_performance()
+print(f"Optimal recursive depth: {performance['optimal_recursive_depth']['depth']}")
+print(f"System stability status: {performance['system_stability']['status']}")
+
+# Check for emergent properties
+for property in performance['emergent_properties']:
+    print(f"Detected: {property['type']} - {property['description']}")
+
+# Visualize performance across recursive depths
+system.visualize_recursive_performance("performance.png")
+
+# Decompress with coherence preservation
+decompressed_data = system.decompress(compressed_data, metrics)
