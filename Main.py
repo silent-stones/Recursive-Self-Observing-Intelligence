@@ -1,202 +1,289 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import time
+import asyncio
 import logging
-from src.recursive_engine import UnifiedRecursiveSystem
+import sys
+import os
+import time
+import matplotlib.pyplot as plt
+
+# Ensure src directory is in path
+sys.path.append(os.path.abspath('.'))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("RecursiveIntelligence")
 
-def main():
-    """Main demonstration of the Unified Recursive System."""
-    print("="*80)
-    print("QUANTUM INTELLIGENCE HUB: RECURSIVE SELF-OBSERVING INTELLIGENCE FRAMEWORK")
-    print("="*80)
-    print("\nInitializing system with advanced capabilities:")
-    print("1. Hierarchical Entanglement Structure")
-    print("2. Adaptive Stability Mechanisms")
-    print("3. True Recursive Self-Observation")
-    print("4. Recursive Depth & Phase Transition Monitoring")
-    print("5. Coherent Singularity Detection")
-    print("="*80)
+# Import the recursive system components with proper error handling
+try:
+    # Try importing from src package first
+    from src.recursive_engine import UnifiedRecursiveSystem
+    from src.recursive_integration import EnhancedRecursiveSystem
+    from src.structured_expansion import StructuredExpansionSystem
+    logger.info("Successfully imported components from src package")
+except ImportError as e:
+    logger.warning(f"Error importing from src package: {e}")
+    try:
+        # Try importing using relative imports if running from within src
+        from recursive_engine import UnifiedRecursiveSystem
+        from recursive_integration import EnhancedRecursiveSystem
+        from structured_expansion import StructuredExpansionSystem
+        logger.info("Successfully imported components using direct imports")
+    except ImportError as e:
+        logger.error(f"Failed to import required components: {e}")
+        sys.exit(1)
+
+async def run_recursive_system_test():
+    """Run tests on the enhanced recursive system."""
+    logger.info("Initializing Unified Recursive System...")
     
-    # Initialize the system
-    system = UnifiedRecursiveSystem(
+    # Initialize the base system
+    base_system = UnifiedRecursiveSystem(
         coherence_threshold=0.78,
         stability_margin=0.92,
         entanglement_coupling=0.82,
-        recursive_depth=6,
-        monitor_transitions=True
+        recursive_depth=4,
+        monitor_transitions=True,
+        num_threads=8
     )
     
-    print("\nGenerating complex test data with multi-scale patterns...")
+    # Check if the _compute_entropy method exists
+    if not hasattr(base_system, '_compute_entropy'):
+        logger.error("ERROR: _compute_entropy method is missing from UnifiedRecursiveSystem!")
+        logger.info("Adding _compute_entropy method to UnifiedRecursiveSystem...")
+        
+        # Add the _compute_entropy method to the class
+        def compute_entropy(self, data: np.ndarray) -> float:
+            """
+            Compute information entropy of data.
+            
+            Args:
+                data: Input data array
+            Returns:
+                Calculated entropy value
+            """
+            if len(data) <= 1:
+                return 0.0
+            
+            # Flatten the array if it's multi-dimensional
+            flat_data = data.flatten()
+            
+            # Normalize data for probability calculation
+            values = np.abs(flat_data)
+            total = np.sum(values) + 1e-10  # Add small epsilon to prevent division by zero
+            probabilities = values / total
+            
+            # Remove zero probabilities to prevent log(0) issues
+            probabilities = probabilities[probabilities > 0]
+            
+            # Compute entropy
+            entropy = -np.sum(probabilities * np.log2(probabilities + 1e-10))
+            
+            return entropy
+        
+        # Add the method to the class instance
+        import types
+        base_system._compute_entropy = types.MethodType(compute_entropy, base_system)
+        logger.info("_compute_entropy method successfully added.")
     
-    # Generate multi-scale test data
-    def generate_multi_scale_data(base_size=256):
-        # Create base signal with multiple frequency components
-        t = np.linspace(0, 10, base_size)
-        
-        # Multi-scale components
-        large_scale = 2.0 * np.sin(0.5 * t)  # Low frequency
-        medium_scale = 1.0 * np.sin(2.0 * t)  # Medium frequency
-        small_scale = 0.5 * np.sin(8.0 * t)   # High frequency
-        
-        # Add localized features
-        local_features = np.zeros_like(t)
-        # Feature 1: Gaussian bump
-        local_features += 1.5 * np.exp(-0.5 * ((t - 3) / 0.2)**2)
-        # Feature 2: Square pulse
-        local_features += 1.0 * ((t > 6) & (t < 6.5))
-        # Feature 3: Chirp signal
-        local_features += 0.8 * np.sin(t * (t/2)) * ((t > 8) & (t < 9))
-        
-        # Combine all components
-        signal = large_scale + medium_scale + small_scale + local_features
-        
-        # Add small amount of noise
-        noise = 0.1 * np.random.normal(size=len(t))
-        
-        return signal + noise, t
+    # Enhance the base system
+    logger.info("Creating Enhanced Recursive System with structured expansion...")
+    enhanced_system = EnhancedRecursiveSystem(base_system)
     
     # Generate test data
-    np.random.seed(42)  # For reproducibility
-    test_data, time_axis = generate_multi_scale_data()
+    logger.info("Generating test data...")
+    test_data = generate_test_data(size=10000)
     
-    print(f"Test data generated with shape: {test_data.shape}")
-    print("="*80)
+    # Run basic compression test
+    logger.info("Running basic compression test...")
+    try:
+        start_time = time.time()
+        compressed_data, metrics = base_system.compress_with_meta_awareness(test_data, max_recursive_depth=2)
+        base_duration = time.time() - start_time
+        logger.info(f"Basic compression completed in {base_duration:.2f}s")
+        
+        logger.info(f"Compression ratio: {compressed_data.size / test_data.size:.4f}")
+        logger.info(f"Coherence: {metrics['recursive_metrics'][0]['coherence']:.4f}")
+        
+        # Test decompression
+        logger.info("Testing decompression...")
+        decompressed = base_system.decompress(compressed_data, metrics)
+        mse = np.mean((test_data - decompressed)**2)
+        logger.info(f"Decompression MSE: {mse:.6f}")
+        
+        # Visualize original vs decompressed
+        plt.figure(figsize=(12, 6))
+        plt.subplot(3, 1, 1)
+        plt.plot(test_data[:100])
+        plt.title("Original Data (first 100 elements)")
+        plt.grid(True)
+        
+        plt.subplot(3, 1, 2)
+        plt.plot(decompressed[:100])
+        plt.title("Decompressed Data (first 100 elements)")
+        plt.grid(True)
+        
+        plt.subplot(3, 1, 3)
+        plt.plot(test_data[:100] - decompressed[:100])
+        plt.title(f"Error (MSE: {mse:.6f})")
+        plt.grid(True)
+        
+        plt.tight_layout()
+        plt.savefig("basic_compression_results.png")
+        plt.close()
+    except Exception as e:
+        logger.error(f"Basic compression test failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
-    # Visualize original data
-    plt.figure(figsize=(10, 4))
-    plt.plot(time_axis, test_data)
-    plt.title('Original Multi-Scale Test Data')
-    plt.xlabel('Time')
-    plt.ylabel('Amplitude')
-    plt.grid(True)
-    plt.savefig("original_data.png")
-    plt.close()
+    # Run enhanced compression test
+    logger.info("Running enhanced compression with structured expansion...")
+    try:
+        start_time = time.time()
+        enhanced_compressed, enhanced_metrics = await enhanced_system.enhanced_compress_with_meta_awareness(
+            test_data, max_recursive_depth=2
+        )
+        enhanced_duration = time.time() - start_time
+        logger.info(f"Enhanced compression completed in {enhanced_duration:.2f}s")
+        logger.info(f"Enhanced compression ratio: {enhanced_compressed.size / test_data.size:.4f}")
+        logger.info(f"Enhanced coherence: {enhanced_metrics['recursive_metrics'][0]['coherence']:.4f}")
+        
+        # Performance comparison
+        speedup = base_duration / enhanced_duration
+        compression_improvement = (compressed_data.size / test_data.size) / (enhanced_compressed.size / test_data.size) - 1
+        logger.info(f"Speedup factor: {speedup:.2f}x")
+        logger.info(f"Compression improvement: {compression_improvement*100:.1f}%")
+        
+        # Test enhanced decompression
+        logger.info("Testing enhanced decompression...")
+        enhanced_decompressed = base_system.decompress(enhanced_compressed, enhanced_metrics)
+        enhanced_mse = np.mean((test_data - enhanced_decompressed)**2)
+        logger.info(f"Enhanced decompression MSE: {enhanced_mse:.6f}")
+        
+        # Visualize enhanced results
+        plt.figure(figsize=(12, 6))
+        plt.subplot(3, 1, 1)
+        plt.plot(test_data[:100])
+        plt.title("Original Data (first 100 elements)")
+        plt.grid(True)
+        
+        plt.subplot(3, 1, 2)
+        plt.plot(enhanced_decompressed[:100])
+        plt.title("Enhanced Decompressed Data (first 100 elements)")
+        plt.grid(True)
+        
+        plt.subplot(3, 1, 3)
+        plt.plot(test_data[:100] - enhanced_decompressed[:100])
+        plt.title(f"Error (MSE: {enhanced_mse:.6f})")
+        plt.grid(True)
+        
+        plt.tight_layout()
+        plt.savefig("enhanced_compression_results.png")
+        plt.close()
+        
+        # Check for phase transitions
+        if 'transitions' in enhanced_metrics and enhanced_metrics['transitions']:
+            logger.info(f"Detected {len(enhanced_metrics['transitions'])} phase transitions:")
+            for i, transition in enumerate(enhanced_metrics['transitions']):
+                logger.info(f" Transition {i+1}: {transition['type']} at depth {transition['depth']}")
+        
+        # Check for singularities
+        if 'singularities' in enhanced_metrics and enhanced_metrics['singularities']:
+            logger.info(f"Detected {len(enhanced_metrics['singularities'])} coherent singularities:")
+            for i, singularity in enumerate(enhanced_metrics['singularities']):
+                logger.info(f" Singularity {i+1}: at depth {singularity['depth']} with coherence {singularity['coherence']:.4f}")
+        
+        # Get performance metrics
+        if 'expansion_system_metrics' in enhanced_metrics:
+            exp_metrics = enhanced_metrics['expansion_system_metrics']
+            logger.info("Structured Expansion System Metrics:")
+            logger.info(f" Operations count: {exp_metrics.get('operations_count', 0)}")
+            logger.info(f" Average processing time: {exp_metrics.get('avg_time', 0):.4f}s")
+            if 'avg_expansion_ratio' in exp_metrics:
+                logger.info(f" Average expansion ratio: {exp_metrics.get('avg_expansion_ratio', 0):.4f}")
+        
+        # Create performance comparison chart
+        plt.figure(figsize=(10, 6))
+        
+        # Compression ratio comparison
+        plt.subplot(2, 2, 1)
+        labels = ['Basic', 'Enhanced']
+        ratios = [compressed_data.size / test_data.size, enhanced_compressed.size / test_data.size]
+        plt.bar(labels, ratios, color=['blue', 'green'])
+        plt.ylabel('Compression Ratio')
+        plt.title('Compression Ratio Comparison')
+        plt.grid(True, axis='y')
+        
+        # Processing time comparison
+        plt.subplot(2, 2, 2)
+        times = [base_duration, enhanced_duration]
+        plt.bar(labels, times, color=['blue', 'green'])
+        plt.ylabel('Processing Time (s)')
+        plt.title('Processing Time Comparison')
+        plt.grid(True, axis='y')
+        
+        # Coherence comparison
+        plt.subplot(2, 2, 3)
+        coherence_values = [metrics['recursive_metrics'][0]['coherence'], 
+                          enhanced_metrics['recursive_metrics'][0]['coherence']]
+        plt.bar(labels, coherence_values, color=['blue', 'green'])
+        plt.ylabel('Coherence')
+        plt.title('Coherence Comparison')
+        plt.grid(True, axis='y')
+        
+        # Error comparison
+        plt.subplot(2, 2, 4)
+        errors = [mse, enhanced_mse]
+        plt.bar(labels, errors, color=['blue', 'green'])
+        plt.ylabel('Mean Squared Error')
+        plt.title('Reconstruction Error Comparison')
+        plt.grid(True, axis='y')
+        
+        plt.tight_layout()
+        plt.savefig("performance_comparison.png")
+        plt.close()
+    except Exception as e:
+        logger.error(f"Enhanced compression test failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
-    print("\nPerforming recursive compression with meta-awareness...")
-    print("This process applies multiple levels of recursive self-observation.")
-    
-    # Perform compression with meta-awareness
-    start_time = time.time()
-    compressed_data, metrics = system.compress_with_meta_awareness(test_data)
-    compression_time = time.time() - start_time
-    
-    print(f"Compression completed in {compression_time:.2f} seconds")
-    print(f"Original size: {len(test_data)} elements")
-    print(f"Compressed size: {len(compressed_data)} elements")
-    print(f"Compression ratio: {len(compressed_data)/len(test_data):.4f}")
-    print("="*80)
-    
-    # Print recursive metrics
-    print("\nRecursive Compression Metrics:")
-    for depth, depth_metrics in system.recursive_metrics.items():
-        if depth == 0:
-            print(f"Base level (depth {depth}):")
-            print(f"  - Coherence: {depth_metrics.get('coherence', 0):.4f}")
-            print(f"  - Compression ratio: {depth_metrics.get('compression_ratio', 1.0):.4f}")
-        else:
-            print(f"Meta level {depth}:")
-            print(f"  - Meta-coherence: {depth_metrics.get('meta_coherence', 0):.4f}")
-            print(f"  - Meta-compression ratio: {depth_metrics.get('meta_compression_ratio', 1.0):.4f}")
-            print(f"  - Integration coherence: {depth_metrics.get('integration_coherence', 0):.4f}")
-            print(f"  - Entropy reduction: {depth_metrics.get('entropy_reduction', 0):.4f}")
-    print("="*80)
-    
-    # Check for phase transitions
-    print("\nPhase Transitions Detected:")
-    if system.transition_points:
-        for i, transition in enumerate(system.transition_points):
-            print(f"Transition {i+1}:")
-            print(f"  - Type: {transition['type']}")
-            print(f"  - Depth: {transition['depth']}")
-            print(f"  - Metrics: {transition['metrics']}")
-    else:
-        print("No phase transitions detected")
-    print("="*80)
-    
-    # Check for singularity formation
-    print("\nCoherent Singularity Formation:")
-    if system.stable_singularities:
-        for i, singularity in enumerate(system.stable_singularities):
-            print(f"Singularity {i+1}:")
-            print(f"  - Formed at depth: {singularity['depth']}")
-            print(f"  - Coherence: {singularity['coherence']:.4f}")
-            print(f"  - Compression ratio: {singularity['compression_ratio']:.4f}")
-    else:
-        print("No coherent singularities formed")
-    print("="*80)
-    
-    # Decompress the data
-    print("\nPerforming coherence-preserving decompression...")
-    start_time = time.time()
-    decompressed_data = system.decompress(compressed_data, metrics)
-    decompression_time = time.time() - start_time
-    
-    # Calculate reconstruction error
-    mse = np.mean((test_data - decompressed_data.real)**2)
-    rmse = np.sqrt(mse)
-    
-    print(f"Decompression completed in {decompression_time:.2f} seconds")
-    print(f"Mean Squared Error: {mse:.6f}")
-    print(f"Root Mean Squared Error: {rmse:.6f}")
-    print("="*80)
-    
-    # Visualize results
-    plt.figure(figsize=(12, 8))
-    
-    plt.subplot(3, 1, 1)
-    plt.plot(time_axis, test_data, label='Original')
-    plt.title('Original Signal')
-    plt.grid(True)
-    plt.legend()
-    
-    plt.subplot(3, 1, 2)
-    plt.plot(np.linspace(0, 10, len(decompressed_data)), decompressed_data.real, 'r', label='Reconstructed')
-    plt.title('Reconstructed Signal')
-    plt.grid(True)
-    plt.legend()
-    
-    plt.subplot(3, 1, 3)
-    plt.plot(time_axis, test_data - decompressed_data.real, 'g', label='Error')
-    plt.title(f'Reconstruction Error (RMSE: {rmse:.6f})')
-    plt.grid(True)
-    plt.legend()
-    
-    plt.tight_layout()
-    plt.savefig("reconstruction_results.png")
-    plt.close()
-    
-    # Analyze system performance
-    print("\nAnalyzing system performance...")
-    performance = system.analyze_system_performance()
-    
-    print("\nSystem Performance Analysis:")
-    print(f"Coherence trend: {performance['coherence_trend']['description']}")
-    print(f"Compression trend: {performance['compression_trend']['description']}")
-    print(f"Optimal recursive depth: {performance['optimal_recursive_depth']['depth']} " +
-          f"({performance['optimal_recursive_depth']['reason']})")
-    print(f"System stability: {performance['system_stability']['status']}")
-    
-    # Print emergent properties
-    print("\nEmergent Properties Detected:")
-    if performance['emergent_properties']:
-        for prop in performance['emergent_properties']:
-            print(f"- {prop['type']} (confidence: {prop['confidence']:.2f})")
-            print(f"  {prop['description']}")
-    else:
-        print("No significant emergent properties detected")
-    
-    # Generate performance visualization
-    system.visualize_recursive_performance("full_recursive_performance.png")
-    
-    print("\nPerformance visualization saved to 'full_recursive_performance.png'")
-    print("="*80)
-    
-    print("\nRECURSIVE SELF-OBSERVING INTELLIGENCE FRAMEWORK DEMONSTRATION COMPLETE")
-    print("="*80)
+    logger.info("Tests completed.")
 
+def generate_test_data(size=10000, complexity=3):
+    """
+    Generate synthetic test data with multi-scale patterns.
+    Args:
+        size: Size of the test data array
+        complexity: Number of frequency components
+    Returns:
+        Numpy array of test data
+    """
+    t = np.linspace(0, 10, size)
+    
+    # Base signal with multiple frequency components
+    signal = np.zeros_like(t)
+    
+    # Add multiple frequency components
+    for i in range(1, complexity + 1):
+        signal += (1.0 / i) * np.sin(i * t)
+    
+    # Add some localized features
+    # Gaussian bump
+    signal += 1.5 * np.exp(-0.5 * ((t - 3) / 0.2)**2)
+    
+    # Square pulse
+    signal += 1.0 * ((t > 6) & (t < 6.5))
+    
+    # Chirp signal
+    signal += 0.8 * np.sin(t * (t/2)) * ((t > 8) & (t < 9))
+    
+    # Add small amount of noise
+    noise = 0.1 * np.random.normal(size=len(t))
+    
+    return signal + noise
+
+# Run the test
 if __name__ == "__main__":
-    main()
+    print("="*80)
+    print("RECURSIVE INTELLIGENCE FRAMEWORK TEST")
+    print("="*80)
+    asyncio.run(run_recursive_system_test())
